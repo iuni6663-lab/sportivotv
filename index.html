@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SPORTIVO | OneFootball Ultimate</title>
+    
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap');
+
+        :root {
+            --of-lime: #bcff00; /* OneFootball Signature Lime */
+            --of-black: #000000;
+            --of-dark: #111111;
+            --of-grey: #1c1c1e;
+            --of-white: #ffffff;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--of-black);
+            color: var(--of-white);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* --- UI UTILS --- */
+        .text-lime { color: var(--of-lime); }
+        .bg-lime { background-color: var(--of-lime); }
+        .border-lime { border-color: var(--of-lime); }
+
+        .heavy-title {
+            font-weight: 900;
+            font-size: 28px;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+            font-style: italic;
+        }
+
+        /* --- SCROLL SYSTEM --- */
+        .main-scroller {
+            height: calc(100vh - 70px - var(--safe-bottom));
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            padding-bottom: 50px;
+        }
+        .main-scroller::-webkit-scrollbar { display: none; }
+
+        /* --- ONEFOOTBALL CARD STYLE --- */
+        .match-card {
+            background: var(--of-dark);
+            border-bottom: 1px solid #222;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .match-card:active { background: #1a1a1a; transform: scale(0.98); }
+
+        .status-badge {
+            font-size: 10px;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        /* --- VIDEO PLAYER CUSTOM --- */
+        .video-js {
+            width: 100% !important;
+            height: auto !important;
+            aspect-ratio: 16/9;
+            background-color: #000;
+        }
+        .vjs-control-bar { background: rgba(0,0,0,0.7) !important; backdrop-filter: blur(10px); }
+        .vjs-play-progress { background-color: var(--of-lime) !important; }
+        .vjs-slider-bar { background-color: var(--of-lime) !important; }
+
+        /* --- TAB BAR --- */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: calc(70px + var(--safe-bottom));
+            background: var(--of-white);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: var(--safe-bottom);
+            z-index: 1000;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #888;
+            font-weight: 700;
+            font-size: 11px;
+            transition: 0.3s;
+        }
+        .tab-item.active { color: var(--of-black); }
+        .tab-item i { font-size: 20px; margin-bottom: 4px; }
+
+        /* --- ADVERTISING LAYER --- */
+        #ad-interstitial {
+            position: fixed;
+            inset: 0;
+            background: var(--of-black);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .ad-timer-circle {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--of-lime);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            margin-top: 20px;
+        }
+
+        /* --- MODALS --- */
+        .premium-modal {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            height: 85%;
+            background: var(--of-white);
+            color: var(--of-black);
+            z-index: 2000;
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+            transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            padding: 30px;
+        }
+        .premium-modal.active { bottom: 0; }
+
+        .benefit-card {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+
+        /* --- CHANNEL DETAIL --- */
+        .detail-tab {
+            display: inline-block;
+            padding: 8px 16px;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 12px;
+            border-bottom: 3px solid transparent;
+        }
+        .detail-tab.active { border-color: var(--of-lime); color: var(--of-lime); }
+
+        /* --- ANIMATIONS --- */
+        @keyframes pulse-lime {
+            0% { box-shadow: 0 0 0 0 rgba(188, 255, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(188, 255, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(188, 255, 0, 0); }
+        }
+        .pulse { animation: pulse-lime 2s infinite; }
+    </style>
+</head>
+<body>
+
+    <div id="ad-interstitial">
+        <span class="text-xs font-bold text-zinc-500 tracking-[5px] uppercase mb-10">Reklama</span>
+        <div id="ad-banner" class="w-[85%] aspect-[9/16] bg-zinc-900 rounded-3xl overflow-hidden relative">
+            <img src="https://i.ibb.co/rGDW8x9V/20260301-021921.png" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent flex flex-col justify-end p-8">
+                <h4 class="text-2xl font-black italic uppercase">Sportivo Premium</h4>
+                <p class="text-sm opacity-70">Hech qanday reklamasiz tomosha qiling!</p>
+            </div>
+        </div>
+        <div class="ad-timer-circle" id="ad-count">5</div>
+    </div>
+
+    <div id="app-wrapper">
+        
+        <div class="main-scroller" id="scroll-engine">
+            
+            <section id="view-home" class="page-view">
+                <header class="p-6 flex justify-between items-center sticky top-0 bg-black/80 backdrop-blur-md z-50">
+                    <h1 class="heavy-title text-lime">Sportivo</h1>
+                    <button onclick="nav.to('profile')" class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center border border-white/10">
+                        <i class="fas fa-user-ninja text-xs"></i>
+                    </button>
+                </header>
+
+                <div id="featured-hero" class="px-4 mb-8">
+                    <div class="relative w-full h-[400px] rounded-[35px] overflow-hidden group shadow-2xl shadow-lime/5">
+                        <img id="feat-img" src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent p-8 flex flex-col justify-end">
+                            <span class="bg-lime text-black font-black text-[10px] px-3 py-1 rounded-full w-fit mb-3 italic uppercase">Hozir efirda</span>
+                            <h2 id="feat-title" class="text-4xl font-black italic uppercase leading-none mb-4">Yuklanmoqda...</h2>
+                            <button onclick="ui.playFeatured()" class="bg-white text-black py-4 px-8 rounded-2xl font-black uppercase text-sm w-fit active:scale-90 transition-all">
+                                <i class="fas fa-play mr-2"></i> Tomosha qilish
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6 mb-4 flex justify-between items-end">
+                    <h3 class="font-black italic text-xl uppercase tracking-tighter">Yangi kanallar</h3>
+                    <span class="text-lime text-xs font-bold uppercase" onclick="nav.to('tv')">Barchasi</span>
+                </div>
+                <div id="latest-list" class="space-y-[1px] bg-zinc-900 border-y border-zinc-900">
+                    </div>
+
+                <h3 class="px-6 mt-10 mb-4 font-black italic text-xl uppercase tracking-tighter">Eng ko'p ko'rilgan</h3>
+                <div id="popular-grid" class="flex gap-4 overflow-x-auto px-6 no-scrollbar pb-10">
+                    </div>
+            </section>
+
+            <section id="view-tv" class="page-view hidden">
+                <div class="p-6 sticky top-0 bg-black z-50">
+                    <h1 class="heavy-title">Barcha Kanallar</h1>
+                    <div class="mt-4 flex gap-2">
+                        <button class="bg-zinc-800 text-[10px] font-black px-4 py-2 rounded-full border border-lime/50">Hammasi</button>
+                        <button class="bg-zinc-900 text-[10px] font-black px-4 py-2 rounded-full text-zinc-500">Sport</button>
+                        <button class="bg-zinc-900 text-[10px] font-black px-4 py-2 rounded-full text-zinc-500">Kino</button>
+                    </div>
+                </div>
+                <div id="full-tv-list" class="grid grid-cols-1">
+                    </div>
+            </section>
+
+            <section id="view-player" class="page-view hidden">
+                <div class="sticky top-0 z-[100] bg-black">
+                    <div id="p-container">
+                        <video id="sportivo-player" class="video-js vjs-big-play-centered" playsinline></video>
+                    </div>
+                    <div class="absolute top-4 left-4 flex gap-2">
+                        <button onclick="nav.to('home')" class="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center border border-white/10">
+                            <i class="fas fa-arrow-left text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="w-2 h-2 bg-lime rounded-full pulse"></span>
+                                <span id="pl-cat" class="text-[10px] font-black text-lime uppercase">Jonli efir</span>
+                            </div>
+                            <h2 id="pl-title" class="text-4xl font-black italic uppercase tracking-tighter">Kanal Nomi</h2>
+                        </div>
+                        <button onclick="ui.toggleFav()" id="fav-trigger" class="w-14 h-14 bg-zinc-900 rounded-3xl flex items-center justify-center border border-white/5">
+                            <i class="far fa-star text-xl"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex gap-6 border-b border-zinc-900 mb-6">
+                        <div class="detail-tab active" onclick="ui.switchDetailTab('epg', this)">Dasturlar</div>
+                        <div class="detail-tab" onclick="ui.switchDetailTab('info', this)">Ma'lumot</div>
+                    </div>
+
+                    <div id="detail-content">
+                        <div id="tab-epg" class="space-y-4">
+                            </div>
+                        <div id="tab-info" class="hidden text-zinc-400 text-sm leading-relaxed space-y-4">
+                            <div class="bg-zinc-900 p-5 rounded-2xl border border-white/5">
+                                <h4 class="text-white font-bold mb-2 uppercase italic">Kanal Haqida</h4>
+                                <p id="ch-description">Ushbu kanal orqali siz eng sara sport musobaqalari, jonli translyatsiyalar va eksklyuziv intervyularni 4K sifatda tomosha qilishingiz mumkin.</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-zinc-900 p-4 rounded-2xl">
+                                    <span class="block text-[10px] uppercase font-black text-zinc-600">Sifat</span>
+                                    <span class="text-white font-bold">Ultra HD 4K</span>
+                                </div>
+                                <div class="bg-zinc-900 p-4 rounded-2xl">
+                                    <span class="block text-[10px] uppercase font-black text-zinc-600">Til</span>
+                                    <span class="text-white font-bold">O'zbek / Rus</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-favs" class="page-view hidden">
+                <h2 class="heavy-title p-6">Saralanganlar</h2>
+                <div id="fav-list-container" class="space-y-[1px]">
+                    </div>
+            </section>
+
+            <section id="view-profile" class="page-view hidden p-6">
+                <h2 class="heavy-title mb-8">Profil</h2>
+                
+                <div class="bg-zinc-900 p-8 rounded-[40px] border border-white/5 mb-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4">
+                        <span id="badge-plan" class="bg-zinc-800 text-zinc-500 text-[10px] font-black px-4 py-1 rounded-full uppercase italic">Free User</span>
+                    </div>
+                    <div class="flex items-center gap-6 mb-6">
+                        <div class="w-16 h-16 bg-lime rounded-full flex items-center justify-center text-black text-2xl font-black">S</div>
+                        <div>
+                            <h4 id="user-email-display" class="text-xl font-black">user@sportivo.uz</h4>
+                            <p class="text-xs text-zinc-500">ID: 88472910</p>
+                        </div>
+                    </div>
+                    <button onclick="ui.showPremium()" class="w-full bg-lime text-black p-5 rounded-2xl font-black uppercase text-sm italic shadow-lg shadow-lime/20">
+                        Premiumga o'tish
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="bg-zinc-900/50 p-5 rounded-2xl flex justify-between items-center border border-white/5">
+                        <span class="font-bold">Ilova tili</span>
+                        <span class="text-lime font-black uppercase text-xs">O'zbekcha</span>
+                    </div>
+                    <div class="bg-zinc-900/50 p-5 rounded-2xl flex justify-between items-center border border-white/5">
+                        <span class="font-bold">Xabarnomalar</span>
+                        <div class="w-10 h-5 bg-lime rounded-full relative"><div class="absolute right-1 top-1 w-3 h-3 bg-black rounded-full"></div></div>
+                    </div>
+                    <button onclick="authManager.logout()" class="w-full p-5 text-red-500 font-black uppercase text-xs tracking-widest mt-10">Tizimdan chiqish</button>
+                </div>
+            </section>
+
+        </div>
+
+        <nav class="tab-bar">
+            <div class="tab-item active" onclick="nav.to('home')">
+                <i class="fas fa-th-large"></i>
+                <span>Explore</span>
+            </div>
+            <div class="tab-item" onclick="nav.to('tv')">
+                <i class="fas fa-play-circle"></i>
+                <span>Live TV</span>
+            </div>
+            <div class="tab-item" onclick="nav.to('favs')">
+                <i class="fas fa-star"></i>
+                <span>Favs</span>
+            </div>
+            <div class="tab-item" onclick="nav.to('profile')">
+                <i class="fas fa-user-shield"></i>
+                <span>Profile</span>
+            </div>
+        </nav>
+    </div>
+
+    <div id="premium-sheet" class="premium-modal">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-black italic uppercase">Sportivo <span class="text-lime bg-black px-2">Pro</span></h2>
+            <button onclick="ui.hidePremium()" class="text-zinc-400"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        
+        <p class="text-sm font-bold text-zinc-500 mb-6">OBUNA BILAN QUYIDAGI IMKONIYATLARGA EGA BO'LING:</p>
+        
+        <div class="benefit-card">
+            <div class="w-12 h-12 bg-lime/10 rounded-xl flex items-center justify-center text-lime"><i class="fas fa-ad text-xl"></i></div>
+            <div>
+                <h4 class="font-black uppercase text-sm">Reklamasiz</h4>
+                <p class="text-xs text-zinc-500">Video boshidagi va banner reklamalar yo'qoladi</p>
+            </div>
+        </div>
+
+        <div class="benefit-card">
+            <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500"><i class="fas fa-bolt text-xl"></i></div>
+            <div>
+                <h4 class="font-black uppercase text-sm">Ultra HD Sifat</h4>
+                <p class="text-xs text-zinc-500">Barcha kanallar maksimal 4K formatda ochiladi</p>
+            </div>
+        </div>
+
+        <div class="benefit-card">
+            <div class="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center text-orange-500"><i class="fas fa-lock-open text-xl"></i></div>
+            <div>
+                <h4 class="font-black uppercase text-sm">VIP Kanallar</h4>
+                <p class="text-xs text-zinc-500">Faqat premium egalari uchun maxfiy kanallar</p>
+            </div>
+        </div>
+
+        <div class="mt-10">
+            <div class="flex justify-between items-center mb-4">
+                <span class="font-black uppercase">Oylik obuna</span>
+                <span class="text-2xl font-black">5 000 UZS</span>
+            </div>
+            <button onclick="ui.payRedirect()" class="w-full bg-black text-white p-6 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all">
+                Hozir faollashtirish
+            </button>
+            <p class="text-[10px] text-center mt-4 text-zinc-400 uppercase font-bold">Xaridni amalga oshirish orqali qoidalarga rozilik bildirasiz</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // CONFIG (Same as before)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6321pYLXAwGWp1ssS8Dx7byelJlyCZrI",
+            authDomain: "sportivo-cdb48.firebaseapp.com",
+            projectId: "sportivo-cdb48",
+            storageBucket: "sportivo-cdb48.firebasestorage.app",
+            messagingSenderId: "537462120353",
+            appId: "1:537462120353:web:42789ef10fb864c493b5e0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let state = {
+            user: null,
+            userData: { plan: 'free' },
+            channels: [],
+            favs: JSON.parse(localStorage.getItem('sp_favs')) || [],
+            player: null,
+            activeChannel: null
+        };
+
+        // --- NAVIGATION ENGINE ---
+        window.nav = {
+            to(id) {
+                document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
+                document.getElementById(`view-${id}`).classList.remove('hidden');
+                
+                document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+                const map = {home:0, tv:1, favs:2, profile:3};
+                if(map[id] !== undefined) document.querySelectorAll('.tab-item')[map[id]].classList.add('active');
+
+                if(id !== 'player' && state.player) state.player.pause();
+                if(id === 'favs') ui.renderFavs();
+                
+                // Scroll to top
+                document.getElementById('scroll-engine').scrollTop = 0;
+            }
+        };
+
+        // --- UI ENGINE ---
+        window.ui = {
+            async init() {
+                const snap = await getDocs(collection(db, "channels"));
+                state.channels = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                this.renderHome();
+                this.renderTVList();
+            },
+
+            renderHome() {
+                // Hero
+                if(state.channels.length > 0) {
+                    const feat = state.channels[0];
+                    document.getElementById('feat-title').innerText = feat.name;
+                    document.getElementById('feat-img').src = feat.logo;
+                    state.activeFeatured = feat;
+                }
+
+                // Latest (Match card style)
+                const latestBox = document.getElementById('latest-list');
+                latestBox.innerHTML = '';
+                state.channels.slice(0, 5).forEach(ch => {
+                    const el = document.createElement('div');
+                    el.className = "match-card p-5 flex items-center justify-between";
+                    el.innerHTML = `
+                        <div class="flex items-center gap-5">
+                            <img src="${ch.logo}" class="w-10 h-10 object-contain rounded-lg">
+                            <div>
+                                <h4 class="font-black uppercase italic text-sm">${ch.name}</h4>
+                                <p class="text-[10px] font-bold text-zinc-500 uppercase">${ch.country}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="status-badge ${ch.isPremium ? 'bg-zinc-800 text-zinc-500' : 'bg-lime text-black'}">
+                                ${ch.isPremium ? 'Premium' : 'Live'}
+                            </span>
+                            <i class="fas fa-chevron-right text-zinc-800 text-xs"></i>
+                        </div>
+                    `;
+                    el.onclick = () => this.handleChannelRequest(ch);
+                    latestBox.appendChild(el);
+                });
+
+                // Popular (Horizontal cards)
+                const popBox = document.getElementById('popular-grid');
+                popBox.innerHTML = '';
+                state.channels.filter(c => c.isPremium).forEach(ch => {
+                    const el = document.createElement('div');
+                    el.className = "min-w-[140px] bg-zinc-900 p-4 rounded-[25px] flex flex-col items-center text-center border border-white/5";
+                    el.innerHTML = `
+                        <img src="${ch.logo}" class="w-14 h-14 object-contain mb-3">
+                        <h5 class="text-[11px] font-black uppercase italic truncate w-full">${ch.name}</h5>
+                    `;
+                    el.onclick = () => this.handleChannelRequest(ch);
+                    popBox.appendChild(el);
+                });
+            },
+
+            renderTVList() {
+                const box = document.getElementById('full-tv-list');
+                box.innerHTML = '';
+                state.channels.forEach(ch => {
+                    const el = document.createElement('div');
+                    el.className = "match-card p-6 flex items-center justify-between";
+                    el.innerHTML = `
+                         <div class="flex items-center gap-5">
+                            <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center p-2">
+                                <img src="${ch.logo}" class="w-full h-full object-contain">
+                            </div>
+                            <h4 class="font-black uppercase italic">${ch.name}</h4>
+                        </div>
+                        <i class="fas fa-play text-zinc-800"></i>
+                    `;
+                    el.onclick = () => this.handleChannelRequest(ch);
+                    box.appendChild(el);
+                });
+            },
+
+            async handleChannelRequest(ch) {
+                if(ch.isPremium && state.userData.plan !== 'premium') {
+                    this.showPremium();
+                    return;
+                }
+
+                if(state.userData.plan !== 'premium') {
+                    await this.runAd();
+                }
+                
+                this.openPlayer(ch);
+            },
+
+            runAd() {
+                return new Promise(resolve => {
+                    const adLayer = document.getElementById('ad-interstitial');
+                    const countEl = document.getElementById('ad-count');
+                    adLayer.style.display = 'flex';
+                    let count = 5;
+                    const itv = setInterval(() => {
+                        count--;
+                        countEl.innerText = count;
+                        if(count <= 0) {
+                            clearInterval(itv);
+                            adLayer.style.display = 'none';
+                            resolve();
+                        }
+                    }, 1000);
+                });
+            },
+
+            openPlayer(ch) {
+                state.activeChannel = ch;
+                nav.to('player');
+                document.getElementById('pl-title').innerText = ch.name;
+                this.updateFavIcon();
+
+                if(!state.player) {
+                    state.player = videojs('sportivo-player', {
+                        autoplay: true,
+                        controls: true,
+                        fluid: true,
+                        responsive: true,
+                        playbackRates: [0.5, 1, 1.5, 2]
+                    });
+                }
+
+                state.player.src({ type: 'application/x-mpegURL', src: ch.streamUrl });
+                this.loadEPG(ch.id);
+            },
+
+            async loadEPG(id) {
+                const box = document.getElementById('tab-epg');
+                box.innerHTML = '<p class="text-xs font-bold text-zinc-600 animate-pulse">EPG YUKLANMOQDA...</p>';
+                
+                const q = query(collection(db, "epg"), where("channelId", "==", id), orderBy("time"));
+                const snap = await getDocs(q);
+                
+                box.innerHTML = '';
+                if(snap.empty) box.innerHTML = '<div class="p-10 text-center border-2 border-dashed border-zinc-900 rounded-3xl text-zinc-600 font-bold uppercase text-[10px]">Bugun uchun dasturlar yo\'q</div>';
+                
+                snap.forEach(d => {
+                    const item = d.data();
+                    box.innerHTML += `
+                        <div class="flex items-center gap-6 p-4 bg-zinc-900/50 rounded-2xl border-l-4 border-lime">
+                            <span class="text-lime font-black font-mono text-lg">${item.time}</span>
+                            <div>
+                                <h5 class="font-bold text-sm uppercase">${item.title}</h5>
+                                <p class="text-[10px] text-zinc-500 font-bold uppercase">${item.date || 'Bugun'}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            },
+
+            switchDetailTab(tab, el) {
+                document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+                el.classList.add('active');
+                document.getElementById('tab-epg').classList.add('hidden');
+                document.getElementById('tab-info').classList.add('hidden');
+                document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            },
+
+            toggleFav() {
+                const id = state.activeChannel.id;
+                if(state.favs.includes(id)) {
+                    state.favs = state.favs.filter(i => i !== id);
+                } else {
+                    state.favs.push(id);
+                }
+                localStorage.setItem('sp_favs', JSON.stringify(state.favs));
+                this.updateFavIcon();
+            },
+
+            updateFavIcon() {
+                const icon = document.querySelector('#fav-trigger i');
+                const isFav = state.favs.includes(state.activeChannel.id);
+                icon.className = isFav ? 'fas fa-star text-lime' : 'far fa-star text-zinc-500';
+            },
+
+            renderFavs() {
+                const box = document.getElementById('fav-list-container');
+                box.innerHTML = '';
+                const favData = state.channels.filter(c => state.favs.includes(c.id));
+                
+                if(favData.length === 0) {
+                    box.innerHTML = '<div class="p-20 text-center opacity-20"><i class="fas fa-star text-4xl mb-4"></i><p class="font-black uppercase text-xs">Hech narsa topilmadi</p></div>';
+                    return;
+                }
+
+                favData.forEach(ch => {
+                    const el = document.createElement('div');
+                    el.className = "match-card p-6 flex items-center justify-between";
+                    el.innerHTML = `<div class="flex items-center gap-4"><img src="${ch.logo}" class="w-8 h-8 object-contain"> <span class="font-black italic uppercase">${ch.name}</span></div><i class="fas fa-chevron-right"></i>`;
+                    el.onclick = () => this.handleChannelRequest(ch);
+                    box.appendChild(el);
+                });
+            },
+
+            showPremium() { document.getElementById('premium-sheet').classList.add('active'); },
+            hidePremium() { document.getElementById('premium-sheet').classList.remove('active'); },
+            payRedirect() {
+                const url = `https://t.me/ua_social?text=Premium+UID:+${state.user.uid}`;
+                window.open(url, '_blank');
+            },
+            playFeatured() {
+                if(state.activeFeatured) this.handleChannelRequest(state.activeFeatured);
+            }
+        };
+
+        // --- AUTH MANAGER ---
+        const authManager = {
+            async observe() {
+                onAuthStateChanged(auth, async (user) => {
+                    if(user) {
+                        state.user = user;
+                        document.getElementById('user-email-display').innerText = user.email;
+                        
+                        const uSnap = await getDoc(doc(db, "users", user.uid));
+                        if(uSnap.exists()) {
+                            state.userData = uSnap.data();
+                            if(state.userData.plan === 'premium') {
+                                const b = document.getElementById('badge-plan');
+                                b.innerText = "Premium PRO";
+                                b.className = "bg-lime text-black text-[10px] font-black px-4 py-1 rounded-full uppercase italic";
+                            }
+                        }
+                        ui.init();
+                    } else {
+                        // Redirect to Login if needed
+                        console.log("No user");
+                    }
+                });
+            },
+            logout() { signOut(auth).then(() => window.location.reload()); }
+        };
+
+        authManager.observe();
+
+    </script>
+</body>
+</html>
